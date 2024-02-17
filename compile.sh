@@ -11,3 +11,5 @@ echo "example_3=============================================="
 mpirun -np 12 --use-hwthread-cpus example_3.out
 echo "example_4=============================================="
 mpirun -np 12 --use-hwthread-cpus example_4.out
+
+rm -rf *.out

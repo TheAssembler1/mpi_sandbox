@@ -1,8 +1,6 @@
 #include <mpi.h>
 #include <stdio.h>
 
-#define PING_PONG_LIMIT 10
-
 int main(int arc, char** argv) {
   // Initialize the MPI environment
   MPI_Init(NULL, NULL);
@@ -15,22 +13,20 @@ int main(int arc, char** argv) {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  int ping_pong_count = 0;
-  int partner_rank = (world_rank + 1) % 2;
-
-  if (world_rank > 1) {
-    goto done;
+  int token;
+  if(world_rank != 0) {
+    MPI_Recv(&token, 1, MPI_INT, world_rank - 1, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    printf("Rank %d recieved token %d\n", world_rank, token);
+    token++;
+  } else {
+    token =  0;
   }
 
-  while(ping_pong_count < PING_PONG_LIMIT) {
-    if(world_rank == ping_pong_count % 2) {
-      ping_pong_count++;
-      MPI_Send(&ping_pong_count, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD);
-      printf("Rank %d sent pong message #%d\n", world_rank, ping_pong_count);
-    } else {
-      MPI_Recv(&ping_pong_count, 1, MPI_INT, partner_rank, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      printf("Rank %d received pong message #%d\n", world_rank, ping_pong_count);
-    }
+  MPI_Send(&token, 1, MPI_INT, (world_rank + 1) % world_size, 0, MPI_COMM_WORLD);
+
+  if(world_rank == 0) {
+    MPI_Recv(&token, 1, MPI_INT, world_rank - 1, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    printf("Rank %d recieved token %d\n", world_rank, token);
   }
 
   // Finalize the MPI environment
